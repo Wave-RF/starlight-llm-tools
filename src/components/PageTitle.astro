@@ -1,0 +1,28 @@
+---
+import Default from "@astrojs/starlight/components/PageTitle.astro";
+import CopyMarkdown from "./CopyMarkdown.astro";
+import LlmDropdown from "./LlmDropdown.astro";
+
+const { id } = Astro.locals.starlightRoute;
+const isHome = !id || id === "index";
+---
+
+{
+  !isHome && (
+    <div class="sllm-tools">
+      <CopyMarkdown slug={id} />
+      <LlmDropdown />
+    </div>
+  )
+}
+<Default />
+
+<style>
+  .sllm-tools {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+</style>

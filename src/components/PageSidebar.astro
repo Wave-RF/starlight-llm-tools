@@ -1,0 +1,40 @@
+---
+import Default from "@astrojs/starlight/components/PageSidebar.astro";
+import CopyMarkdown from "./CopyMarkdown.astro";
+import LlmDropdown from "./LlmDropdown.astro";
+
+const { id } = Astro.locals.starlightRoute;
+const isHome = !id || id === "index";
+---
+
+{
+  !isHome && (
+    <div class="sllm-tools sllm-tools--sidebar">
+      <CopyMarkdown slug={id} />
+      <LlmDropdown />
+    </div>
+  )
+}
+<Default />
+
+<style>
+  .sllm-tools--sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1rem var(--sl-sidebar-pad-x) 1rem;
+    border-bottom: 1px solid var(--sl-color-gray-6);
+    width: calc(var(--sl-sidebar-width) - 2 * var(--sl-sidebar-pad-x));
+  }
+
+  .sllm-tools--sidebar :global(.sllm-copy-btn),
+  .sllm-tools--sidebar :global(.sllm-trigger) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sllm-tools--sidebar :global(.sllm-links) {
+    left: 0;
+    right: 0;
+  }
+</style>
