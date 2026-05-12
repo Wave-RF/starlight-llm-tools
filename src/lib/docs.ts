@@ -2,6 +2,19 @@ import type { CollectionEntry } from "astro:content";
 
 export type DocEntry = CollectionEntry<"docs">;
 
+// Special slugs that live in the docs collection but aren't user-facing
+// doc content — error pages, etc. Excluded from per-page .md twins, the
+// llms.txt family, and the Copy-Markdown / Open-with-AI buttons. (The
+// `index` page has its own contextual handling in each consumer and is
+// intentionally not in this set.)
+const NON_DOC_SLUGS = new Set(["404"]);
+
+/** Whether a docs-collection entry is real user-facing documentation
+ *  that should appear in the LLM-friendly outputs. */
+export function isLlmDoc(id: string): boolean {
+  return !NON_DOC_SLUGS.has(id);
+}
+
 export function titleFromId(id: string): string {
   const last = id.split("/").pop() ?? id;
   return last.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());

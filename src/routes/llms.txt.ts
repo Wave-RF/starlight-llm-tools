@@ -10,6 +10,7 @@ import {
 import {
   docMdUrl,
   docTitle,
+  isLlmDoc,
   sortDocsBySidebar,
 } from "../lib/docs.ts";
 
@@ -21,7 +22,10 @@ export const prerender = true;
 
 export const GET: APIRoute = async ({ site }) => {
   const origin = site?.origin ?? siteOriginFallback;
-  const allDocs = sortDocsBySidebar(await getCollection("docs"), sidebarOrder);
+  const allDocs = sortDocsBySidebar(
+    (await getCollection("docs")).filter((d) => isLlmDoc(d.id)),
+    sidebarOrder,
+  );
 
   const groups = new Map<string, CollectionEntry<"docs">[]>();
   for (const doc of allDocs) {

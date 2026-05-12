@@ -1,14 +1,15 @@
 ---
 import Default from "@astrojs/starlight/components/PageSidebar.astro";
+import { isLlmDoc } from "../lib/docs.ts";
 import CopyMarkdown from "./CopyMarkdown.astro";
 import LlmDropdown from "./LlmDropdown.astro";
 
 const { id } = Astro.locals.starlightRoute;
-const isHome = !id || id === "index";
+const showTools = !!id && id !== "index" && isLlmDoc(id);
 ---
 
 {
-  !isHome && (
+  showTools && (
     <div class="sllm-tools sllm-tools--sidebar">
       <CopyMarkdown slug={id} />
       <LlmDropdown />

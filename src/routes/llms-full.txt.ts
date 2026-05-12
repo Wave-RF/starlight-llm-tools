@@ -5,7 +5,7 @@ import {
   siteOriginFallback,
   title as configTitle,
 } from "virtual:starlight-llm-tools/config";
-import { docTitle, sortDocsBySidebar } from "../lib/docs.ts";
+import { docTitle, isLlmDoc, sortDocsBySidebar } from "../lib/docs.ts";
 import { transformMarkdown } from "../lib/transforms.ts";
 
 // Full documentation dump: every doc's source (with the standard
@@ -16,7 +16,10 @@ export const prerender = true;
 
 export const GET: APIRoute = async ({ site }) => {
   const origin = site?.origin ?? siteOriginFallback;
-  const docs = sortDocsBySidebar(await getCollection("docs"), sidebarOrder);
+  const docs = sortDocsBySidebar(
+    (await getCollection("docs")).filter((d) => isLlmDoc(d.id)),
+    sidebarOrder,
+  );
 
   const segments: string[] = [
     `<SYSTEM>Full developer documentation for ${configTitle}. Individual pages are also available at <path>.md for targeted access.</SYSTEM>`,
