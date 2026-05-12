@@ -1,6 +1,6 @@
 {
   "name": "starlight-llm-tools",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Starlight plugin that adds LLM-friendly tooling to your docs site: per-page `.md` twins with navigation headers, llms.txt / llms-full.txt / llms-small.txt routes, and Copy-Markdown + Open-with-AI buttons in the page header. Optional transform pipeline plays nicely with starlight-glossary.",
   "keywords": [
     "astro",
@@ -42,7 +42,8 @@
   ],
   "peerDependencies": {
     "@astrojs/starlight": ">=0.36.0",
-    "astro": ">=5.0.0"
+    "astro": ">=5.0.0",
+    "starlight-glossary": ">=1.0.0"
   },
   "peerDependenciesMeta": {
     "starlight-glossary": {
