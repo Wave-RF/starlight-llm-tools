@@ -89,7 +89,7 @@ Source-level transforms run on every `.md` output:
 | ------------------- | ------------ |
 | MDX `<Image>`       | Resolves `<Image src={binding} alt="..." />` to `![alt](url)` using Astro's `getImage()`, matching the URL the HTML page emits. |
 | MDX `import` lines  | Strips top-of-file MDX scaffolding imports (code-block contents are preserved by tracking fence state). |
-| Glossary references | If `starlight-glossary` is installed, `[label](glossary:slug)` becomes a real link via the plugin's `transform` export and `virtual:starlight-glossary/data` module. No-op otherwise. |
+| Glossary references | If `starlight-glossary` is installed, `[label](glossary:slug)` becomes a real link via the plugin's `transform` export (which reads `glossary.json` from the project root). No-op otherwise. |
 
 ## Page navigation header
 

@@ -102,65 +102,55 @@ export function stripMdxImports(body: string): string {
   return out.join("\n");
 }
 
-interface GlossaryTransformAPI {
+interface GlossaryModule {
+  loadGlossaryMap: () => Promise<
+    Map<string, { term: string; wikipedia: string | null }>
+  >;
   resolveGlossaryLinks: (
     body: string,
-    glossary: unknown,
+    glossary: Map<string, { term: string; wikipedia: string | null }>,
     options: { siteOrigin: string },
   ) => string;
 }
 
-interface GlossaryDataAPI {
-  glossaryData: {
-    terms: Record<string, { term: string; wikipedia: string | null }>;
-  };
-}
-
-let glossaryModules: {
-  transform: GlossaryTransformAPI;
-  data: GlossaryDataAPI;
+let glossary: {
+  resolveGlossaryLinks: GlossaryModule["resolveGlossaryLinks"];
+  map: Awaited<ReturnType<GlossaryModule["loadGlossaryMap"]>>;
 } | null | undefined;
 
-async function loadGlossaryModules() {
-  if (glossaryModules !== undefined) return glossaryModules;
+async function loadGlossaryOnce() {
+  if (glossary !== undefined) return glossary;
   try {
-    // @ts-expect-error optional peer — present only when starlight-glossary
-    // is installed in the consumer project. Either both succeed or we
-    // null out the cache and silently skip glossary resolution.
-    const transform = (await import("starlight-glossary/transform")) as
-      | GlossaryTransformAPI
+    // Optional peer — resolved at runtime. If starlight-glossary isn't
+    // installed (or glossary.json isn't on disk), the import or the
+    // subsequent file read throws and we cache a null no-op result.
+    // @ts-expect-error optional peer dependency
+    const mod = (await import("starlight-glossary/transform")) as
+      | GlossaryModule
       | undefined;
-    // @ts-expect-error virtual module published by starlight-glossary's
-    // Astro integration when present.
-    const data = (await import("virtual:starlight-glossary/data")) as
-      | GlossaryDataAPI
-      | undefined;
-    if (!transform || !data) {
-      glossaryModules = null;
+    if (!mod?.loadGlossaryMap || !mod?.resolveGlossaryLinks) {
+      glossary = null;
       return null;
     }
-    glossaryModules = { transform, data };
-    return glossaryModules;
+    const map = await mod.loadGlossaryMap();
+    glossary = { resolveGlossaryLinks: mod.resolveGlossaryLinks, map };
+    return glossary;
   } catch {
-    glossaryModules = null;
+    glossary = null;
     return null;
   }
 }
 
 /** Resolve `[label](glossary:slug)` references to real URLs (Wikipedia
  *  where available, otherwise the local /glossary anchor). No-op if
- *  starlight-glossary is not installed. */
+ *  starlight-glossary is not installed or its glossary.json is missing. */
 export async function resolveGlossaryLinksIfPresent(
   body: string,
   siteOrigin: string,
 ): Promise<string> {
-  const mods = await loadGlossaryModules();
-  if (!mods) return body;
-  const map = new Map<string, { term: string; wikipedia: string | null }>();
-  for (const [slug, entry] of Object.entries(mods.data.glossaryData.terms)) {
-    map.set(slug, { term: entry.term, wikipedia: entry.wikipedia });
-  }
-  return mods.transform.resolveGlossaryLinks(body, map, { siteOrigin });
+  const g = await loadGlossaryOnce();
+  if (!g) return body;
+  return g.resolveGlossaryLinks(body, g.map, { siteOrigin });
 }
 
 /** Apply the full transform pipeline used by `.md` twin / llms-*.txt
