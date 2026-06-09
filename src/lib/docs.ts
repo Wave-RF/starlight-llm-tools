@@ -42,10 +42,7 @@ export function parentId(docId: string): string | null {
 /** Sort docs by the order they appear in the provided sidebar slug list.
  *  Any docs not present fall through to the end, alphabetized, so output
  *  is deterministic even with sidebar coverage gaps. */
-export function sortDocsBySidebar<T extends DocEntry>(
-  docs: T[],
-  order: string[],
-): T[] {
+export function sortDocsBySidebar<T extends DocEntry>(docs: T[], order: string[]): T[] {
   const rank = new Map(order.map((slug, i) => [slug, i]));
   const known: T[] = [];
   const unknown: T[] = [];
@@ -63,6 +60,6 @@ export function sortDocsBySidebar<T extends DocEntry>(
  *  always treated as an overview so it makes it into llms-small.txt. */
 export function isOverviewPage(doc: DocEntry, allDocs: DocEntry[]): boolean {
   if (doc.id === "index") return true;
-  const prefix = doc.id + "/";
+  const prefix = `${doc.id}/`;
   return allDocs.some((d) => d.id.startsWith(prefix));
 }

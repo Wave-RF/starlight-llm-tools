@@ -2,8 +2,8 @@
 // using the package's helpers without going through the auto-injected
 // plugin route layer.
 
-export { sidebarSlugOrder } from "./sidebar.ts";
 export {
+  type DocEntry,
   docMdUrl,
   docTitle,
   docUrl,
@@ -11,9 +11,9 @@ export {
   parentId,
   sortDocsBySidebar,
   titleFromId,
-  type DocEntry,
 } from "./docs.ts";
 export { pageContextHeader } from "./header.ts";
+export { sidebarSlugOrder } from "./sidebar.ts";
 export {
   resolveGlossaryLinksIfPresent,
   stripMdxImports,

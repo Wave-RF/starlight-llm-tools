@@ -1,4 +1,4 @@
-# starlight-llm-tools
+# @wave-rf/starlight-llm-tools
 
 A [Starlight](https://starlight.astro.build/) plugin that adds LLM-friendly tooling to your docs site. Drop it into your `astro.config.mjs` and you get:
 
@@ -13,9 +13,14 @@ Pair it with [`cloudflare-md-router`](https://github.com/Wave-RF/cloudflare-md-r
 ## Install
 
 ```sh
-pnpm add github:Wave-RF/starlight-llm-tools
-# or pin to a tag / commit:
-# pnpm add github:Wave-RF/starlight-llm-tools#v0.1.0
+pnpm add @wave-rf/starlight-llm-tools
+```
+
+`starlight-glossary` is an optional peer — install it too if you want
+`[label](glossary:slug)` links resolved (the plugin no-ops without it):
+
+```sh
+pnpm add starlight-glossary
 ```
 
 ## Use
@@ -24,7 +29,7 @@ pnpm add github:Wave-RF/starlight-llm-tools
 // astro.config.mjs
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
-import starlightLlmTools from "starlight-llm-tools";
+import starlightLlmTools from "@wave-rf/starlight-llm-tools";
 
 export default defineConfig({
   site: "https://docs.example.com",
@@ -73,7 +78,7 @@ starlightLlmTools({
 });
 ```
 
-If another plugin (or your own astro config) has already set the same component override, the plugin logs a warning and leaves your override untouched. To still get the buttons, render `CopyMarkdown.astro` and `LlmDropdown.astro` from `starlight-llm-tools/components/` inside your override.
+If another plugin (or your own astro config) has already set the same component override, the plugin logs a message and leaves your override untouched. To still get the buttons, render `CopyMarkdown.astro` and `LlmDropdown.astro` from `@wave-rf/starlight-llm-tools/components/` inside your override.
 
 ## How it works
 
@@ -124,7 +129,7 @@ import {
   stripMdxImports,
   transformMdxImages,
   resolveGlossaryLinksIfPresent,
-} from "starlight-llm-tools/lib";
+} from "@wave-rf/starlight-llm-tools/lib";
 ```
 
 ## Compatibility

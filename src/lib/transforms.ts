@@ -1,5 +1,5 @@
-import type { ImageMetadata } from "astro";
 import { getImage } from "astro:assets";
+import type { ImageMetadata } from "astro";
 
 // MDX import stripping + MDX `<Image>` binding resolution. Both are
 // applied unconditionally to .md twin output so consumers don't see
@@ -15,7 +15,7 @@ import { getImage } from "astro:assets";
 // the consumer project, not from this package.
 const imageModules = import.meta.glob<{ default: ImageMetadata }>(
   "/src/assets/**/*.{png,jpg,jpeg,webp,svg,gif}",
-  { eager: true },
+  { eager: true }
 );
 const imagesByFilename = new Map<string, ImageMetadata>();
 for (const [path, mod] of Object.entries(imageModules)) {
@@ -24,10 +24,7 @@ for (const [path, mod] of Object.entries(imageModules)) {
 }
 
 const imageUrlCache = new Map<string, string>();
-async function builtImageUrl(
-  meta: ImageMetadata,
-  key: string,
-): Promise<string> {
+async function builtImageUrl(meta: ImageMetadata, key: string): Promise<string> {
   const cached = imageUrlCache.get(key);
   if (cached) return cached;
   const { src } = await getImage({ src: meta });
@@ -40,10 +37,7 @@ async function builtImageUrl(
  *  asset URL via Astro's getImage(), matching the URL Starlight's HTML
  *  emits for the same image. Falls back to `![alt]()` if the binding
  *  can't be resolved. */
-export async function transformMdxImages(
-  body: string,
-  siteOrigin: string,
-): Promise<string> {
+export async function transformMdxImages(body: string, siteOrigin: string): Promise<string> {
   const bindingToFilename = new Map<string, string>();
   const importRe =
     /^\s*import\s+(\w+)\s+from\s+['"]([^'"]+\.(?:png|jpg|jpeg|webp|svg|gif))['"]\s*;?/gm;
@@ -54,8 +48,7 @@ export async function transformMdxImages(
     if (filename) bindingToFilename.set(binding, filename);
   }
 
-  const imageRe =
-    /<Image\b[^>]*\bsrc\s*=\s*\{(\w+)\}[^>]*\balt\s*=\s*["']([^"']*)["'][^>]*\/?>/g;
+  const imageRe = /<Image\b[^>]*\bsrc\s*=\s*\{(\w+)\}[^>]*\balt\s*=\s*["']([^"']*)["'][^>]*\/?>/g;
   const tasks: Array<{ full: string; to: string | Promise<string> }> = [];
   for (const match of body.matchAll(imageRe)) {
     const [full, binding, alt] = match as unknown as [string, string, string];
@@ -103,20 +96,21 @@ export function stripMdxImports(body: string): string {
 }
 
 interface GlossaryModule {
-  loadGlossaryMap: () => Promise<
-    Map<string, { term: string; wikipedia: string | null }>
-  >;
+  loadGlossaryMap: () => Promise<Map<string, { term: string; wikipedia: string | null }>>;
   resolveGlossaryLinks: (
     body: string,
     glossary: Map<string, { term: string; wikipedia: string | null }>,
-    options: { siteOrigin: string },
+    options: { siteOrigin: string }
   ) => string;
 }
 
-let glossary: {
-  resolveGlossaryLinks: GlossaryModule["resolveGlossaryLinks"];
-  map: Awaited<ReturnType<GlossaryModule["loadGlossaryMap"]>>;
-} | null | undefined;
+let glossary:
+  | {
+      resolveGlossaryLinks: GlossaryModule["resolveGlossaryLinks"];
+      map: Awaited<ReturnType<GlossaryModule["loadGlossaryMap"]>>;
+    }
+  | null
+  | undefined;
 
 async function loadGlossaryOnce() {
   if (glossary !== undefined) return glossary;
@@ -125,9 +119,7 @@ async function loadGlossaryOnce() {
     // installed (or glossary.json isn't on disk), the import or the
     // subsequent file read throws and we cache a null no-op result.
     // @ts-expect-error optional peer dependency
-    const mod = (await import("starlight-glossary/transform")) as
-      | GlossaryModule
-      | undefined;
+    const mod = (await import("starlight-glossary/transform")) as GlossaryModule | undefined;
     if (!mod?.loadGlossaryMap || !mod?.resolveGlossaryLinks) {
       glossary = null;
       return null;
@@ -146,7 +138,7 @@ async function loadGlossaryOnce() {
  *  starlight-glossary is not installed or its glossary.json is missing. */
 export async function resolveGlossaryLinksIfPresent(
   body: string,
-  siteOrigin: string,
+  siteOrigin: string
 ): Promise<string> {
   const g = await loadGlossaryOnce();
   if (!g) return body;
@@ -156,10 +148,7 @@ export async function resolveGlossaryLinksIfPresent(
 /** Apply the full transform pipeline used by `.md` twin / llms-*.txt
  *  routes: MDX `<Image>` → markdown, MDX `import` lines stripped,
  *  glossary references resolved (if starlight-glossary is present). */
-export async function transformMarkdown(
-  body: string,
-  siteOrigin: string,
-): Promise<string> {
+export async function transformMarkdown(body: string, siteOrigin: string): Promise<string> {
   let out = body;
   out = await transformMdxImages(out, siteOrigin);
   out = stripMdxImports(out);
