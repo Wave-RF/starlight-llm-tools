@@ -10,6 +10,13 @@ The entries below predate automated releases (they map to the `0.1.0`–`0.3.0`
 git history, which was cut before release automation and carries no `vX.Y.Z`
 tags).
 
+## [0.3.1](https://github.com/Wave-RF/starlight-llm-tools/compare/v0.3.0...v0.3.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* exclude non-doc slugs from llms-small.txt route ([#4](https://github.com/Wave-RF/starlight-llm-tools/issues/4)) ([e52c46e](https://github.com/Wave-RF/starlight-llm-tools/commit/e52c46eda059ea29ea01111f3fa4e1a7383ee206))
+
 ## 0.3.0
 
 - **feat:** exclude non-doc slugs (e.g. `404`) from the per-page `.md` twins, the `llms.txt` family, and the Copy-Markdown / Open-with-AI buttons.

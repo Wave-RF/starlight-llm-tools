@@ -1,6 +1,6 @@
 {
   "name": "@wave-rf/starlight-llm-tools",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Starlight plugin that adds LLM-friendly tooling to your docs site: per-page `.md` twins with navigation headers, llms.txt / llms-full.txt / llms-small.txt routes, and Copy-Markdown + Open-with-AI buttons in the page header. Optional transform pipeline plays nicely with starlight-glossary.",
   "keywords": [
     "astro",
