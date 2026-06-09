@@ -1,11 +1,11 @@
-import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { sidebarSlugOrder } from "./lib/sidebar.ts";
 import type {
   StarlightIntegrationAstroConfigSetupCtx,
   StarlightPlugin,
   StarlightSidebarConfig,
 } from "./starlight-types.ts";
-import { sidebarSlugOrder } from "./lib/sidebar.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -28,9 +28,7 @@ export interface StarlightLlmToolsOptions {
   siteOriginFallback?: string;
 }
 
-function flattenStarlightTitle(
-  raw: string | Record<string, string> | undefined,
-): string {
+function flattenStarlightTitle(raw: string | Record<string, string> | undefined): string {
   if (!raw) return "";
   if (typeof raw === "string") return raw;
   // Locale-keyed object — pick the first available value.
@@ -38,12 +36,9 @@ function flattenStarlightTitle(
   return typeof first === "string" ? first : "";
 }
 
-export default function starlightLlmTools(
-  options: StarlightLlmToolsOptions = {},
-): StarlightPlugin {
+export default function starlightLlmTools(options: StarlightLlmToolsOptions = {}): StarlightPlugin {
   const injectInto = options.injectInto ?? "PageTitle";
-  const siteOriginFallback =
-    options.siteOriginFallback ?? "http://localhost:4321";
+  const siteOriginFallback = options.siteOriginFallback ?? "http://localhost:4321";
 
   return {
     name: "starlight-llm-tools",
@@ -53,10 +48,7 @@ export default function starlightLlmTools(
         // Copy-Markdown / Open-with-AI buttons for free. We respect any
         // existing override the user already set — they win.
         if (injectInto !== false) {
-          const componentPath = path.join(
-            here,
-            `components/${injectInto}.astro`,
-          );
+          const componentPath = path.join(here, `components/${injectInto}.astro`);
           const existing = config.components ?? {};
           if (!existing[injectInto]) {
             updateConfig({
@@ -64,7 +56,7 @@ export default function starlightLlmTools(
             });
           } else {
             logger.info(
-              `${injectInto} override already set by another plugin or your astro.config; not overriding. Render the components from starlight-llm-tools/components/* yourself if you want them in your custom override.`,
+              `${injectInto} override already set by another plugin or your astro.config; not overriding. Render the components from starlight-llm-tools/components/* yourself if you want them in your custom override.`
             );
           }
         }
@@ -83,9 +75,7 @@ export default function starlightLlmTools(
         addIntegration({
           name: "starlight-llm-tools/integration",
           hooks: {
-            "astro:config:setup"(
-              astroCtx: StarlightIntegrationAstroConfigSetupCtx,
-            ) {
+            "astro:config:setup"(astroCtx: StarlightIntegrationAstroConfigSetupCtx) {
               const { injectRoute, updateConfig: updateAstroConfig } = astroCtx;
 
               updateAstroConfig({
@@ -95,22 +85,19 @@ export default function starlightLlmTools(
                       name: "starlight-llm-tools:virtual-config",
                       // Allow Vite's dev server to read this package's
                       // files (sits outside the user's project root).
-                      configResolved(viteConfig: {
-                        server?: { fs?: { allow?: string[] } };
-                      }) {
+                      configResolved(viteConfig: { server?: { fs?: { allow?: string[] } } }) {
                         if (!viteConfig.server) return;
                         if (!viteConfig.server.fs) return;
                         const allow = viteConfig.server.fs.allow;
                         if (!Array.isArray(allow)) return;
                         if (!allow.includes(here)) allow.push(here);
                       },
-                      resolveId(id: string): string | void {
+                      resolveId(id: string): string | undefined {
                         if (id === "virtual:starlight-llm-tools/config")
                           return "\0virtual:starlight-llm-tools/config";
                       },
-                      load(id: string): string | void {
-                        if (id === "\0virtual:starlight-llm-tools/config")
-                          return virtualSource;
+                      load(id: string): string | undefined {
+                        if (id === "\0virtual:starlight-llm-tools/config") return virtualSource;
                       },
                     },
                   ],

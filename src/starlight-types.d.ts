@@ -18,11 +18,7 @@ export interface StarlightSidebarItem {
 export type StarlightSidebarConfig = StarlightSidebarItem[];
 
 export interface StarlightIntegrationAstroConfigSetupCtx {
-  injectRoute: (opts: {
-    pattern: string;
-    entrypoint: string;
-    prerender?: boolean;
-  }) => void;
+  injectRoute: (opts: { pattern: string; entrypoint: string; prerender?: boolean }) => void;
   injectScript: (stage: "page" | "before-hydration", content: string) => void;
   updateConfig: (patch: Record<string, unknown>) => void;
   config: {
@@ -47,7 +43,7 @@ export interface StarlightPlugin {
         description?: string;
       } & Record<string, unknown>;
       updateConfig: (
-        patch: { components?: Record<string, string> } & Record<string, unknown>,
+        patch: { components?: Record<string, string> } & Record<string, unknown>
       ) => void;
     }) => void | Promise<void>;
   };

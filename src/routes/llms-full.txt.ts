@@ -1,10 +1,10 @@
-import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
 import {
+  title as configTitle,
   sidebarOrder,
   siteOriginFallback,
-  title as configTitle,
 } from "virtual:starlight-llm-tools/config";
+import type { APIRoute } from "astro";
 import { docTitle, isLlmDoc, sortDocsBySidebar } from "../lib/docs.ts";
 import { transformMarkdown } from "../lib/transforms.ts";
 
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ site }) => {
   const origin = site?.origin ?? siteOriginFallback;
   const docs = sortDocsBySidebar(
     (await getCollection("docs")).filter((d) => isLlmDoc(d.id)),
-    sidebarOrder,
+    sidebarOrder
   );
 
   const segments: string[] = [

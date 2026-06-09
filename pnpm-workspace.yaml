@@ -1,0 +1,20 @@
+# pnpm config. pnpm 11 reads its settings from here even for a single-package
+# repo (the filename is historical — this is NOT a multi-package workspace decl).
+#
+# autoInstallPeers:false — don't pull the peer deps (astro, @astrojs/starlight,
+# starlight-glossary) in as direct deps of our node_modules; they're the
+# consumer's to provide. We DO list astro + @astrojs/starlight as
+# devDependencies so `tsc --noEmit` can resolve their real types.
+#
+# allowBuilds — astro/starlight drag in native packages (esbuild, sharp) that
+# ship postinstall build scripts. pnpm 11 won't run them unprompted and, left
+# unacknowledged, errors with ERR_PNPM_IGNORED_BUILDS (a non-zero exit that
+# fails the CI install). We never RUN esbuild/sharp here — there is no build
+# step, and `tsc --noEmit` only needs their type declarations — so we explicitly
+# set each to `false`: acknowledged, NOT built, install stays green. (Setting a
+# value also silences pnpm's "set this to true or false" prompt that would
+# otherwise keep rewriting this file.)
+autoInstallPeers: false
+allowBuilds:
+  esbuild: false
+  sharp: false

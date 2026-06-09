@@ -9,21 +9,14 @@ declare module "astro:content" {
     body?: string;
     data: { title?: string; description?: string } & Record<string, unknown>;
   }
-  export function getCollection<T extends string>(
-    name: T,
-  ): Promise<CollectionEntry<T>[]>;
+  export function getCollection<T extends string>(name: T): Promise<CollectionEntry<T>[]>;
 }
 
 declare module "astro:assets" {
   import type { ImageMetadata } from "astro";
-  export function getImage(opts: {
-    src: ImageMetadata;
-  }): Promise<{ src: string }>;
+  export function getImage(opts: { src: ImageMetadata }): Promise<{ src: string }>;
 }
 
 interface ImportMeta {
-  glob<T = unknown>(
-    pattern: string,
-    options?: { eager?: boolean },
-  ): Record<string, T>;
+  glob<T = unknown>(pattern: string, options?: { eager?: boolean }): Record<string, T>;
 }

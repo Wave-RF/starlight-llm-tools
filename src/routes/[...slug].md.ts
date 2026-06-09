@@ -1,6 +1,6 @@
-import type { APIRoute, GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
 import { siteOriginFallback } from "virtual:starlight-llm-tools/config";
+import type { APIRoute, GetStaticPaths } from "astro";
 import { isLlmDoc } from "../lib/docs.ts";
 import { pageContextHeader } from "../lib/header.ts";
 import { transformMarkdown } from "../lib/transforms.ts";
