@@ -5,7 +5,7 @@ import {
   siteOriginFallback,
 } from "virtual:starlight-llm-tools/config";
 import type { APIRoute } from "astro";
-import { docTitle, isOverviewPage, sortDocsBySidebar } from "../lib/docs.ts";
+import { docTitle, isLlmDoc, isOverviewPage, sortDocsBySidebar } from "../lib/docs.ts";
 import { transformMarkdown } from "../lib/transforms.ts";
 
 // Abridged documentation: home page + any doc that has children in the
@@ -16,7 +16,10 @@ export const prerender = true;
 
 export const GET: APIRoute = async ({ site }) => {
   const origin = site?.origin ?? siteOriginFallback;
-  const allDocs = await getCollection("docs");
+  // Drop non-doc slugs (e.g. 404) before deriving overviews so an error
+  // page nested under one can't be treated as a section or leak into the
+  // abridged output — matching the rest of the llms.txt family.
+  const allDocs = (await getCollection("docs")).filter((doc) => isLlmDoc(doc.id));
   const docs = sortDocsBySidebar(
     allDocs.filter((doc) => isOverviewPage(doc, allDocs)),
     sidebarOrder
