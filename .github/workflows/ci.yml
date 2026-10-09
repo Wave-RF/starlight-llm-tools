@@ -50,3 +50,6 @@ jobs:
 
       - name: Typecheck (tsc --noEmit)
         run: pnpm run typecheck
+
+      - name: Unit tests (node --test)
+        run: pnpm run test
