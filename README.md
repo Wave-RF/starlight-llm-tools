@@ -4,7 +4,7 @@ A [Starlight](https://starlight.astro.build/) plugin that adds LLM-friendly tool
 
 - **Per-page `.md` twin** — every doc is also served as raw markdown at `<path>.md`, with a navigation header (Section / Subpages / Related / HTML version).
 - **`llms.txt` manifest** + **`llms-full.txt`** + **`llms-small.txt`** — built per the [llmstxt.org](https://llmstxt.org) spec, ordered by your sidebar.
-- **Copy-Markdown button** + **Open-with-AI dropdown** (Claude / ChatGPT / Cursor) — auto-injected into every page's `PageTitle` slot.
+- **Copy-Markdown button** + **Open-with-AI dropdown** (Claude / ChatGPT / Cursor) — auto-injected into every page's `PageTitle` slot. The dropdown is an ARIA menu button (`role="menu"` / `menuitem`, arrow-key, Home/End, type-ahead, Escape and Tab handling), so content passes that skip menus (for example [`@wave-rf/astro-trademarks`](https://github.com/Wave-RF/astro-trademarks)) leave its labels alone.
 - **MDX-aware transforms** — strips MDX `import` lines and resolves `<Image src={Binding} />` references to real built asset URLs in the markdown output.
 - **Optional [starlight-glossary](https://github.com/Wave-RF/starlight-glossary) integration** — when present, `[label](glossary:slug)` references in the markdown output are resolved to real Wikipedia / glossary URLs.
 
