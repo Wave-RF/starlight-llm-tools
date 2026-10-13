@@ -14,8 +14,15 @@ const slug = pagePath.replace(/^\/|\/$/g, "") || "index";
 const mdUrl = `/${slug}.md`;
 ---
 
-<details class="sllm-dropdown">
-  <summary class="sllm-trigger">
+<div class="sllm-dropdown" data-sllm-dropdown>
+  <button
+    type="button"
+    class="sllm-trigger"
+    id="sllm-trigger"
+    aria-haspopup="menu"
+    aria-expanded="false"
+    aria-controls="sllm-menu"
+  >
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="16"
@@ -26,6 +33,7 @@ const mdUrl = `/${slug}.md`;
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
+      aria-hidden="true"
     >
       <path d="M12 8V4H8"></path>
       <rect width="16" height="12" x="4" y="8" rx="2"></rect>
@@ -35,23 +43,107 @@ const mdUrl = `/${slug}.md`;
       <path d="M9 13v2"></path>
     </svg>
     <span>Open with AI</span>
-  </summary>
-  <ul class="sllm-links">
-    <li>
-      <a href={`https://claude.ai/new?q=${prompt}`} target="_blank" rel="noopener">Claude</a>
+  </button>
+  <ul class="sllm-links" id="sllm-menu" role="menu" aria-labelledby="sllm-trigger" hidden>
+    <li role="none">
+      <a role="menuitem" tabindex="-1" href={`https://claude.ai/new?q=${prompt}`} target="_blank" rel="noopener">Claude</a>
     </li>
-    <li>
-      <a href={`https://chatgpt.com/?hints=search&q=${prompt}`} target="_blank" rel="noopener">ChatGPT</a>
+    <li role="none">
+      <a role="menuitem" tabindex="-1" href={`https://chatgpt.com/?hints=search&q=${prompt}`} target="_blank" rel="noopener">ChatGPT</a>
     </li>
-    <li>
-      <a href={`https://cursor.com/link/prompt?text=${prompt}`} target="_blank" rel="noopener">Cursor</a>
+    <li role="none">
+      <a role="menuitem" tabindex="-1" href={`https://cursor.com/link/prompt?text=${prompt}`} target="_blank" rel="noopener">Cursor</a>
     </li>
-    <li class="sllm-divider"></li>
-    <li>
-      <a href={mdUrl} target="_blank" rel="noopener">View as Markdown</a>
+    <li class="sllm-divider" role="separator"></li>
+    <li role="none">
+      <a role="menuitem" tabindex="-1" href={mdUrl} target="_blank" rel="noopener">View as Markdown</a>
     </li>
   </ul>
-</details>
+</div>
+
+<script>
+  import { menuFocusTarget, triggerOpenTarget } from "../lib/menu-keys.ts";
+
+  const items = (root: Element) =>
+    Array.from(root.querySelectorAll<HTMLAnchorElement>('[role="menuitem"]'));
+
+  function setOpen(root: HTMLElement, open: boolean, focus?: "first" | "last" | "button" | null) {
+    const button = root.querySelector<HTMLButtonElement>("button");
+    const menu = root.querySelector<HTMLElement>('[role="menu"]');
+    if (!button || !menu) return;
+    menu.hidden = !open;
+    button.setAttribute("aria-expanded", String(open));
+    const list = items(root);
+    if (open && focus === "first") list[0]?.focus();
+    else if (open && focus === "last") list[list.length - 1]?.focus();
+    else if (!open && focus === "button") button.focus();
+  }
+
+  function init(root: HTMLElement) {
+    if (root.dataset.sllmReady) return;
+    root.dataset.sllmReady = "true";
+    const button = root.querySelector<HTMLButtonElement>("button");
+    const menu = root.querySelector<HTMLElement>('[role="menu"]');
+    if (!button || !menu) return;
+    const isOpen = () => !menu.hidden;
+
+    // Enter/Space fire click; detail === 0 means it came from the keyboard (or AT).
+    button.addEventListener("click", (event) => {
+      if (isOpen()) setOpen(root, false);
+      else setOpen(root, true, event.detail === 0 ? "first" : null);
+    });
+    button.addEventListener("keydown", (event) => {
+      const target = triggerOpenTarget(event.key, items(root).length);
+      if (target === null) return;
+      event.preventDefault();
+      setOpen(root, true, target === 0 ? "first" : "last");
+    });
+
+    menu.addEventListener("keydown", (event) => {
+      const list = items(root);
+      const current = list.indexOf(document.activeElement as HTMLAnchorElement);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(root, false, "button");
+      } else if (event.key === "Tab") {
+        // Let focus move on naturally; just close.
+        setOpen(root, false);
+      } else if (event.key === " " && current >= 0) {
+        event.preventDefault();
+        list[current].click();
+      } else if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+        const next = menuFocusTarget(
+          event.key,
+          current,
+          list.map((a) => a.textContent ?? ""),
+        );
+        if (next !== null) {
+          event.preventDefault();
+          list[next].focus();
+        }
+      }
+    });
+    // Activating an item follows the link (default) and dismisses the menu.
+    menu.addEventListener("click", (event) => {
+      if ((event.target as Element).closest('[role="menuitem"]')) setOpen(root, false);
+    });
+  }
+
+  const initAll = () => {
+    for (const root of document.querySelectorAll<HTMLElement>("[data-sllm-dropdown]")) init(root);
+  };
+
+  // Registered once per page load of this module; a click outside closes every open menu.
+  document.addEventListener("click", (event) => {
+    for (const root of document.querySelectorAll<HTMLElement>("[data-sllm-dropdown]")) {
+      if (!root.contains(event.target as Node)) setOpen(root, false);
+    }
+  });
+
+  initAll();
+  // Re-init after Astro view-transition navigations swap the DOM.
+  document.addEventListener("astro:page-load", initAll);
+</script>
 
 <style>
   .sllm-dropdown {
@@ -69,12 +161,10 @@ const mdUrl = `/${slug}.md`;
     font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.15s ease;
-    list-style: none;
     white-space: nowrap;
-  }
-
-  .sllm-trigger::-webkit-details-marker {
-    display: none;
+    background: none;
+    font-family: inherit;
+    line-height: inherit;
   }
 
   .sllm-trigger:hover {
@@ -97,6 +187,10 @@ const mdUrl = `/${slug}.md`;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
+  .sllm-links[hidden] {
+    display: none;
+  }
+
   .sllm-links li a {
     display: block;
     padding: 0.35rem 0.75rem;
@@ -106,7 +200,8 @@ const mdUrl = `/${slug}.md`;
     transition: all 0.1s ease;
   }
 
-  .sllm-links li a:hover {
+  .sllm-links li a:hover,
+  .sllm-links li a:focus-visible {
     background: var(--sl-color-accent-low);
     color: var(--sl-color-accent);
   }

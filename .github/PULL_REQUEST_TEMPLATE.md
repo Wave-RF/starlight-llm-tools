@@ -12,11 +12,11 @@ squash-merge subject semantic-release parses to decide the release):
 
 ## Test plan
 
-<!-- How you verified it. `pnpm run verify` (Biome + tsc --noEmit) at minimum. -->
+<!-- How you verified it. `pnpm run verify` (Biome + tsc --noEmit + tests + release-config check) at minimum. -->
 
 ## Checklist
 
-- [ ] `pnpm run verify` passes locally (Biome `check` + `tsc --noEmit`)
+- [ ] `pnpm run verify` passes locally (Biome `check` + `tsc --noEmit` + `node --test` + the offline release-config check)
 - [ ] Public surface changes (plugin options, the `…/lib` helper exports, route/component contracts) are reflected in the JSDoc **and** `README.md`
 - [ ] Changed behavior of the `.md` twin / `llms.txt` family / transform pipeline is noted in the README
 - [ ] New shapes typecheck against the `src/*.d.ts` shims (no leaning on `any`)

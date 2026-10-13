@@ -56,8 +56,9 @@
     "format": "biome format --write .",
     "check": "biome check .",
     "check:release": "node scripts/check-release-config.mjs",
-    "verify": "biome check . && pnpm run typecheck && pnpm run check:release && bash scripts/ci-marker.sh write",
-    "setup": "git config core.hooksPath .githooks"
+    "verify": "biome check . && pnpm run typecheck && pnpm run test && pnpm run check:release && bash scripts/ci-marker.sh write",
+    "setup": "git config core.hooksPath .githooks",
+    "test": "node --test \"test/**/*.test.ts\""
   },
   "peerDependencies": {
     "@astrojs/starlight": ">=0.36.0",

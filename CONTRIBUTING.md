@@ -20,13 +20,13 @@ TypeScript through their own Astro/Vite pipeline.
 pnpm run typecheck   # tsc --noEmit (type safety against the local Astro/Starlight shims)
 pnpm run check       # Biome lint + format check (what CI runs)
 pnpm run format      # auto-fix formatting
-pnpm run verify      # check + typecheck together (the local gate; what the hooks run)
+pnpm run verify      # check + typecheck + tests + the release-config check (the local gate; what the hooks run)
 ```
 
 Biome owns JS/TS/JSON style. `.astro` single-file components aren't parsed by
 Biome (their embedded `<style>`/`<script>` are hand-tuned and out of scope); the
 TypeScript in them is exercised by the consumer's build, not by `tsc --noEmit`
-here. There is no test suite today — `tsc --noEmit` plus review is the guard. See
+here. Tests are `node --test` over `test/` (the dropdown's keyboard logic and markup); `tsc --noEmit` plus review guard the rest. See
 [AGENTS.md §Key Invariants](AGENTS.md#key-invariants) for what must stay true
 (standalone-first / optional glossary, deterministic sidebar ordering, the MDX
 transform contract, non-doc-slug exclusion, respecting consumer overrides).

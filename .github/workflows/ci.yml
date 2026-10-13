@@ -51,6 +51,9 @@ jobs:
       - name: Typecheck (tsc --noEmit)
         run: pnpm run typecheck
 
+      - name: Unit tests (node --test)
+        run: pnpm run test
+
       # Runs the commit analyzer and notes generator with .releaserc.json against
       # synthetic commits (offline), so an incompatible semantic-release /
       # conventional-changelog pairing fails this PR, not a release on main.

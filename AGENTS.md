@@ -6,7 +6,7 @@ Context for AI coding agents (Claude Code, Copilot, Cursor, etc.) working on thi
 
 The non-negotiables, ordered by how often agents miss them. These override convenience: if a rule blocks you, satisfy it; don't work around it.
 
-1. **Validate locally before every push** — `pnpm run verify` (Biome `check` + `tsc --noEmit` + the offline release-config check). Don't use CI as your first feedback loop ([§Local-First Validation](#local-first-validation)).
+1. **Validate locally before every push** — `pnpm run verify` (Biome `check` + `tsc --noEmit` + `node --test` + the offline release-config check). Don't use CI as your first feedback loop ([§Local-First Validation](#local-first-validation)).
 2. **A PR-branch push needs every pre-push reviewer satisfied** — run **`/prepush`**: it reads `scripts/pre-push-reviewers.sh`, runs the reviewers the change needs in parallel (fresh context), skips the rest *on the record*, and loops until each it ran returns `ship_it` ([§Agent PR Discipline](#agent-pr-discipline)).
 3. **Every public-surface change updates its docs in the same PR** — a changed `starlightLlmTools` option / `…/lib` export / route or component contract must update its **JSDoc** **and** `README.md` ([§Documentation Sync](#documentation-sync)). Release notes are **generated into GitHub Releases** (`CHANGELOG.md` is frozen history) — don't hand-edit it; just use the right Conventional-Commit type, because it decides whether the merge releases ([§Release Process](#release-process)).
 4. **Address and resolve every review finding** — fix it or track it in an issue; never silently drop one ([§Review Response](#review-response)).
@@ -51,7 +51,7 @@ pnpm run typecheck      # tsc --noEmit — the type-safety gate
 pnpm run check          # biome check . (lint + format check) — the CI gate
 pnpm run format         # biome format --write . (auto-fix formatting)
 pnpm run lint           # biome lint .
-pnpm run verify         # biome check . && tsc --noEmit && pnpm run check:release, then write the tree marker
+pnpm run verify         # biome check . && tsc --noEmit && pnpm run test && pnpm run check:release, then write the tree marker
 pnpm run check:release  # offline: semantic-release analyzer + notes generator vs .releaserc.json
 ```
 
@@ -59,7 +59,7 @@ Biome owns JS/TS/JSON formatting + lint. `.astro` files aren't parsed by Biome (
 
 ## Local-First Validation
 
-**Validate locally before pushing.** `pnpm run verify` runs the same gates as CI (Biome + `tsc --noEmit` + the offline release-config check). On success it writes the tree-keyed marker `tmp/verify-passed-tree-<TREE>` (`tmp/` is gitignored).
+**Validate locally before pushing.** `pnpm run verify` runs the same gates as CI (Biome `check` + `tsc --noEmit` + `node --test` + the offline release-config check). On success it writes the tree-keyed marker `tmp/verify-passed-tree-<TREE>` (`tmp/` is gitignored).
 
 Enforced via git hooks (installed by `pnpm run setup`; apply to humans and agents alike):
 
@@ -174,7 +174,7 @@ scripts/                       → shell + node tooling (PR-title lint, reviewer
 
 ## CI / Automation
 
-- **`ci.yml`** — Biome `check` + `tsc --noEmit` + the offline release-config check (`pnpm run check:release`) on every PR/push (Node 24; pnpm 11 needs ≥ 22.13, so CI doesn't run on the package's declared `engines` floor — that documents the consumer floor).
+- **`ci.yml`** — Biome `check` + `tsc --noEmit` + `node --test` + the offline release-config check (`pnpm run check:release`) on every PR/push (Node 24; pnpm 11 needs ≥ 22.13, so CI doesn't run on the package's declared `engines` floor — that documents the consumer floor).
 - **`pr-title.yml`** — Conventional-Commit title check (required; skipped for `dependabot[bot]`).
 - **`publish-npm.yml`** — release on merge: every push to `main` runs `verify`, then semantic-release, which tags `vX.Y.Z`, publishes to npm via OIDC with provenance, and creates the GitHub Release — or does nothing if no commit warrants a release. ONE file (npm allows one trusted-publisher filename per package).
 - **`dependabot.yml` + `dependabot-automerge.yml`** — weekly grouped dep/action bumps; patch/minor auto-merge after CI, major held for review.
