@@ -45,7 +45,7 @@ What must stay true. Preserve the named invariant when you touch its code. There
 ## Build & Test Commands
 
 ```bash
-pnpm install            # resolve deps (no committed lockfile — it's a library)
+pnpm install            # install from the committed pnpm-lock.yaml (CI uses --frozen-lockfile)
 pnpm run setup          # one-time: install git hooks (git config core.hooksPath .githooks)
 pnpm run typecheck      # tsc --noEmit — the type-safety gate
 pnpm run check          # biome check . (lint + format check) — the CI gate
@@ -54,6 +54,8 @@ pnpm run lint           # biome lint .
 pnpm run verify         # biome check . && tsc --noEmit && pnpm run test && pnpm run check:release, then write the tree marker
 pnpm run check:release  # offline: semantic-release analyzer + notes generator vs .releaserc.json
 ```
+
+**Dependencies are locked and aged.** `pnpm-lock.yaml` is committed; CI and the release build use `pnpm install --frozen-lockfile`, so they get exactly the tree that was tested (the lockfile doesn't reach consumers, who resolve with their own). `pnpm-workspace.yaml` sets `minimumReleaseAge: 10080` (7 days, `@wave-rf/*` and `@wavehouse/*` exempt) and Dependabot has a matching 7-day `cooldown`. Third-party GitHub Actions are pinned by commit SHA with a `# vX.Y.Z` comment.
 
 Biome owns JS/TS/JSON formatting + lint. `.astro` files aren't parsed by Biome (Astro single-file components are out of its scope), so their embedded `<style>`/`<script>` stay hand-tuned; their TypeScript is exercised by the consumer's build, not `tsc --noEmit` here. Run `pnpm run format` to fix formatting; the Claude format-on-save hook keeps edited JS/TS/JSON files clean automatically.
 
