@@ -71,7 +71,7 @@
     }
   },
   "devDependencies": {
-    "@astrojs/starlight": "^0.42.6",
+    "@astrojs/starlight": "^0.42.5",
     "@biomejs/biome": "^2.4.15",
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/release-notes-generator": "14.1.1",
