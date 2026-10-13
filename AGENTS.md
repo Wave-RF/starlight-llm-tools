@@ -6,9 +6,9 @@ Context for AI coding agents (Claude Code, Copilot, Cursor, etc.) working on thi
 
 The non-negotiables, ordered by how often agents miss them. These override convenience: if a rule blocks you, satisfy it; don't work around it.
 
-1. **Validate locally before every push** — `pnpm run verify` (Biome `check` + `tsc --noEmit`). Don't use CI as your first feedback loop ([§Local-First Validation](#local-first-validation)).
+1. **Validate locally before every push** — `pnpm run verify` (Biome `check` + `tsc --noEmit` + the offline release-config check). Don't use CI as your first feedback loop ([§Local-First Validation](#local-first-validation)).
 2. **A PR-branch push needs every pre-push reviewer satisfied** — run **`/prepush`**: it reads `scripts/pre-push-reviewers.sh`, runs the reviewers the change needs in parallel (fresh context), skips the rest *on the record*, and loops until each it ran returns `ship_it` ([§Agent PR Discipline](#agent-pr-discipline)).
-3. **Every public-surface change updates its docs in the same PR** — a changed `starlightLlmTools` option / `…/lib` export / route or component contract must update its **JSDoc** **and** `README.md` ([§Documentation Sync](#documentation-sync)). The `CHANGELOG.md` is **auto-generated** — don't hand-edit it; just use the right Conventional-Commit type.
+3. **Every public-surface change updates its docs in the same PR** — a changed `starlightLlmTools` option / `…/lib` export / route or component contract must update its **JSDoc** **and** `README.md` ([§Documentation Sync](#documentation-sync)). Release notes are **generated into GitHub Releases** (`CHANGELOG.md` is frozen history) — don't hand-edit it; just use the right Conventional-Commit type, because it decides whether the merge releases ([§Release Process](#release-process)).
 4. **Address and resolve every review finding** — fix it or track it in an issue; never silently drop one ([§Review Response](#review-response)).
 5. **Drafts only; valid title** — `gh pr create --draft` (never `gh pr ready`/approve); the PR **title** must pass Conventional Commits — check with `scripts/lint-pr-title.sh "<title>"` before creating ([§Agent PR Discipline](#agent-pr-discipline)).
 6. **Never force-push or rebase a PR branch** — to absorb upstream, `git merge origin/main` ([§Branch Maintenance](#branch-maintenance)).
@@ -51,14 +51,15 @@ pnpm run typecheck      # tsc --noEmit — the type-safety gate
 pnpm run check          # biome check . (lint + format check) — the CI gate
 pnpm run format         # biome format --write . (auto-fix formatting)
 pnpm run lint           # biome lint .
-pnpm run verify         # biome check . && tsc --noEmit, then write the tree marker
+pnpm run verify         # biome check . && tsc --noEmit && pnpm run check:release, then write the tree marker
+pnpm run check:release  # offline: semantic-release analyzer + notes generator vs .releaserc.json
 ```
 
 Biome owns JS/TS/JSON formatting + lint. `.astro` files aren't parsed by Biome (Astro single-file components are out of its scope), so their embedded `<style>`/`<script>` stay hand-tuned; their TypeScript is exercised by the consumer's build, not `tsc --noEmit` here. Run `pnpm run format` to fix formatting; the Claude format-on-save hook keeps edited JS/TS/JSON files clean automatically.
 
 ## Local-First Validation
 
-**Validate locally before pushing.** `pnpm run verify` runs the same gates as CI (Biome + `tsc --noEmit`). On success it writes the tree-keyed marker `tmp/verify-passed-tree-<TREE>` (`tmp/` is gitignored).
+**Validate locally before pushing.** `pnpm run verify` runs the same gates as CI (Biome + `tsc --noEmit` + the offline release-config check). On success it writes the tree-keyed marker `tmp/verify-passed-tree-<TREE>` (`tmp/` is gitignored).
 
 Enforced via git hooks (installed by `pnpm run setup`; apply to humans and agents alike):
 
@@ -69,14 +70,19 @@ Bypass (`--no-verify`) is for human WIP only; agents must not (§Don't bypass th
 
 ## Release Process
 
-Releases are **automated by release-please** from Conventional Commits — you rarely touch a version by hand. The flow:
+**Releases happen on merge**, driven by [semantic-release](https://semantic-release.org) (`.releaserc.json`, run by `publish-npm.yml` on every push to `main`). There is no release PR, no version bump commit and no token: the git tag `vX.Y.Z` is the version's source of truth, and GitHub Releases hold the notes. **The squash-merge title (a Conventional Commit, already enforced by the required `pr-title` check) decides whether the merge releases:**
 
-1. Land PRs with Conventional-Commit titles (squash-merge → the title is the commit release-please parses).
-2. release-please maintains an open **release PR** that bumps `package.json` `version`, updates `CHANGELOG.md`, and updates `.release-please-manifest.json`. During 0.x: **breaking (`feat!`/`BREAKING CHANGE`) → minor**, **`feat`/`fix` → patch** (see `release-please-config.json`), so `^0.x` consumers safely auto-update.
-3. **Merging the release PR** ships it: release-please tags `vX.Y.Z` + creates the GitHub Release, and the same `publish-npm.yml` run publishes to npm (`latest`, or `alpha`/`beta`/`rc`/`next` for a prerelease) with provenance via OIDC.
-4. Independently, **every push to `main`** publishes a content-addressed `0.0.0-dev.<hash>` (hash of the shipped `src/` tree + `package.json`) under the **`dev`** dist-tag (never the `latest` consumers get).
+| Title type | Release |
+| ---------- | ------- |
+| `fix` `perf` `revert` | patch |
+| `feat` | minor |
+| `!` on any type, or a `BREAKING CHANGE:` footer | **major** (no 0.x shielding) |
+| `deps` `ci` `chore` `docs` `test` `refactor` `build` `style` | none |
 
-Use **`/release`** to inspect the pending release. Don't hand-edit `CHANGELOG.md` / `version` / the manifest — release-please owns them. **First-time setup** (npm org, one-time manual publish, OIDC trusted publisher, optional PAT, branch protection) lives in [`RELEASING.md`](RELEASING.md). Note this repo has **no `vX.Y.Z` git tags yet** — the manifest is seeded to `0.3.0`, so the first release-please-cut release is the next version.
+- Dependabot titles are `deps:` / `ci:`, so they never release. A **runtime** dependency bump that should ship must be retitled `fix(deps): ...` before merge.
+- `package.json` `version` is the placeholder `0.0.0-development`; semantic-release sets the real version in the CI workspace only. **Never bump it, never create tags by hand, never hand-edit `CHANGELOG.md`** (frozen history up to 0.3.1; newer notes are GitHub Releases).
+- The workflow runs `pnpm run verify` first, so a red `main` never releases. If a release fails, semantic-release opens a "release failed" issue; fix the cause and re-run the failed run. Caveat: semantic-release pushes the tag *before* publishing, so a failure after that point needs the tag deleted first (see RELEASING.md §Failures).
+- Use **`/release`** to see what the next merge would release. **Full detail** (re-runs, forcing a patch, failure handling, first-publish and trusted-publisher setup) lives in [`RELEASING.md`](RELEASING.md).
 
 ## Review Response
 
@@ -101,7 +107,7 @@ Agents follow the universal git hooks (pre-commit + pre-push in `.githooks/`). O
 
 Create PRs with `gh pr create --draft`. Only humans flip draft → ready (`gh pr ready` is blocked) and only humans approve / request changes (`gh pr review --approve`/`--request-changes` are blocked). Adding/removing human reviewers is humans-only.
 
-**PR title format** — the title becomes the squash-merge subject on `main` (which release-please parses), and is gated by the required `pr-title` check. Conventional Commits: `<type>(optional-scope)(optional-!): <subject>`, **≤ 72 chars**, subject lowercase-first, no trailing period. Types: `feat fix docs refactor test chore ci deps build perf revert style`. Validate before creating: `scripts/lint-pr-title.sh "<title>"`. The same script backs the local gate and the CI check, so they never drift.
+**PR title format** — the title becomes the squash-merge subject on `main` (which semantic-release parses to decide the release), and is gated by the required `pr-title` check. Conventional Commits: `<type>(optional-scope)(optional-!): <subject>`, **≤ 72 chars**, subject lowercase-first, no trailing period. Types: `feat fix docs refactor test chore ci deps build perf revert style`. Validate before creating: `scripts/lint-pr-title.sh "<title>"`. The same script backs the local gate and the CI check, so they never drift.
 
 ### Pre-push self-review is mandatory on PR branches
 
@@ -138,7 +144,7 @@ Every change to the public surface updates its docs in the same PR:
 | Add/modify a `…/lib` helper export | `src/lib/index.ts` + the helper's JSDoc, `README.md` (Helper exports) |
 | Change what a route emits (`.md` twin header, `llms.txt` grouping, full/small) | `README.md` (How it works / nav-header example) |
 | Change the package name / `exports` / `files` / `engines` / peer deps | `README.md` (Install + Compatibility), `package.json` |
-| Any change | a Conventional-Commit message (release-please writes `CHANGELOG.md`) |
+| Any change | a Conventional-Commit PR title — it becomes the squash commit and decides the release (see `RELEASING.md`); release notes go to GitHub Releases |
 
 Before finishing, grep the identifiers you touched (option names, helper names) across `README.md` / `src/` to catch staleness. Prose quality + code↔docs sync are gated by the `docs-reviewer`.
 
@@ -159,17 +165,17 @@ src/routes/[...slug].md.ts    → per-page .md twin route (prerendered)
 src/routes/llms{,-full,-small}.txt.ts → the llms.txt family (prerendered)
 src/components/*.astro         → CopyMarkdown / LlmDropdown buttons + PageTitle / PageSidebar overrides
 src/*.d.ts                     → local type shims (astro:content, astro:assets, Starlight plugin, the virtual config)
-scripts/                       → shell + node tooling (PR-title lint, reviewer manifest, markers, dev-version, repo setup)
+scripts/                       → shell + node tooling (PR-title lint, reviewer manifest, markers, release-config check, repo setup)
 .githooks/                     → universal pre-commit + pre-push (installed via pnpm run setup)
 .claude/                       → settings, review subagents, /prepush + /release commands, gate/marker/format hooks
-.github/                       → CI, pr-title, publish (release-please + OIDC), dependabot; prompts/ review rubrics
-release-please-config.json, .release-please-manifest.json  → release automation
+.github/                       → CI, pr-title, publish (semantic-release + OIDC), dependabot; prompts/ review rubrics
+.releaserc.json                → semantic-release config (release rules, plugins)
 ```
 
 ## CI / Automation
 
-- **`ci.yml`** — Biome `check` + `tsc --noEmit` on every PR/push (Node 24; pnpm 11 needs ≥ 22.13, so CI doesn't run on the package's declared `engines` floor — that documents the consumer floor).
+- **`ci.yml`** — Biome `check` + `tsc --noEmit` + the offline release-config check (`pnpm run check:release`) on every PR/push (Node 24; pnpm 11 needs ≥ 22.13, so CI doesn't run on the package's declared `engines` floor — that documents the consumer floor).
 - **`pr-title.yml`** — Conventional-Commit title check (required; skipped for `dependabot[bot]`).
-- **`publish-npm.yml`** — release-please + OIDC publish to `latest`/prerelease, and the `@dev` content-addressed channel on every main push.
+- **`publish-npm.yml`** — release on merge: every push to `main` runs `verify`, then semantic-release, which tags `vX.Y.Z`, publishes to npm via OIDC with provenance, and creates the GitHub Release — or does nothing if no commit warrants a release. ONE file (npm allows one trusted-publisher filename per package).
 - **`dependabot.yml` + `dependabot-automerge.yml`** — weekly grouped dep/action bumps; patch/minor auto-merge after CI, major held for review.
-- Third-party actions are pinned to commit SHAs with version comments where verified (`googleapis/release-please-action`, `dependabot/fetch-metadata` are on major tags pending a SHA pin).
+- Third-party actions are pinned to commit SHAs with version comments where verified (`dependabot/fetch-metadata` is on a major tag pending a SHA pin).
