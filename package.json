@@ -78,7 +78,7 @@
     "@types/node": "^26.6.5",
     "astro": "^7.4.0",
     "conventional-changelog-conventionalcommits": "9.3.1",
-    "semantic-release": "25.0.9",
+    "semantic-release": "26.0.1",
     "typescript": "^7.0.2"
   }
 }
